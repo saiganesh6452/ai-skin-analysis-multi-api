@@ -1,0 +1,83 @@
+# ══════════════════════════════════════════════
+# SENTINEL v3 + AI-Skin-Analysis — .gitignore
+# ══════════════════════════════════════════════
+
+# ── Secrets & Environment ─────────────────────
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+
+# ── Node.js ───────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn
+
+# ── Python ────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# ── React / Frontend Build ────────────────────
+frontend/build/
+frontend/dist/
+frontend/.cache/
+.parcel-cache/
+
+# ── Docker ────────────────────────────────────
+kafka-data/
+kafka-logs/
+
+# ── Prometheus / Grafana Data ─────────────────
+prometheus-data/
+grafana-data/
+loki-data/
+alertmanager-data/
+
+# ── SENTINEL Runtime ──────────────────────────
+repo/
+*.json.report
+pytest-report.json
+jest-report.json
+go-test-output.txt
+positions.yaml
+
+# ── Kubernetes ────────────────────────────────
+kubeconfig
+*.kubeconfig
+/etc/sentinel/
+
+# ── IDE / OS ──────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Logs ──────────────────────────────────────
+logs/
+*.log
+npm-debug.log
+
+# ── Certificates ──────────────────────────────
+*.pem
+*.key
+*.crt
+*.csr
