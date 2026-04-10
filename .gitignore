@@ -28,7 +28,7 @@ venv/
 env/
 *.egg-info/
 dist/
-build/
+# build/ — not globally ignored (backend-grok/client/build needs to be committed)
 .pytest_cache/
 .coverage
 htmlcov/
@@ -39,6 +39,7 @@ frontend/build/
 frontend/dist/
 frontend/.cache/
 .parcel-cache/
+backend-grok/client/node_modules/
 
 # ── Docker ────────────────────────────────────
 kafka-data/
