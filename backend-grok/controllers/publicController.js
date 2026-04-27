@@ -4,38 +4,29 @@ const { analyzeImageQuality } = require('../services/imageQuality');
 const { analyzeSkin } = require('../services/skinAnalysis');
 const { generatePdfReport, generatePdfToBuffer } = require('../services/pdfReport');
 const { uploadPdf } = require('../services/s3');
-const { markUsed } = require('./paymentController');
-const { sanitizeString, sanitizeEmail, sanitizePhone } = require('../utils/sanitize');
+const { sanitizePhone } = require('../utils/sanitize');
 
 async function registerUser(req, res) {
-  const name = sanitizeString(req.body.name, 100);
-  const email = sanitizeEmail(req.body.email);
   const phone = sanitizePhone(req.body.phone);
   const db = getDB();
 
-  if (!name || !email || !phone) {
-    return res.status(400).json({ success: false, error: 'Name, email, and phone are required' });
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return res.status(400).json({ success: false, error: 'Invalid email' });
-  }
-  if (phone.replace(/\D/g, '').length < 7) {
-    return res.status(400).json({ success: false, error: 'Invalid phone' });
+  if (!phone || phone.replace(/\D/g, '').length < 7) {
+    return res.status(400).json({ success: false, error: 'A valid phone number is required' });
   }
   if (!db) {
-    return res.json({ success: true, user: { name, email, phone } });
+    return res.json({ success: true, user: { phone } });
   }
 
   try {
     await db.collection('users').findOneAndUpdate(
-      { email },
-      { $set: { name, phone, updatedAt: new Date() }, $setOnInsert: { email, createdAt: new Date() }, $inc: { analysisCount: 1 } },
+      { phone },
+      { $set: { phone, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() }, $inc: { analysisCount: 1 } },
       { upsert: true, returnDocument: 'after' }
     );
-    console.log(`[User] ${name} (${email})`);
-    res.json({ success: true, user: { name, email, phone } });
+    console.log(`[User] ${phone}`);
+    res.json({ success: true, user: { phone } });
   } catch (e) {
-    if (e.code === 11000) return res.json({ success: true, user: { name, email, phone } });
+    if (e.code === 11000) return res.json({ success: true, user: { phone } });
     throw e;
   }
 }
@@ -49,32 +40,9 @@ async function checkQuality(req, res) {
 async function analyze(req, res) {
   if (!req.file) return res.status(400).json({ success: false, error: 'No image' });
 
-  const email = sanitizeEmail(req.body.email || '');
-  const name = sanitizeString(req.body.name || '', 100);
   const phone = sanitizePhone(req.body.phone || '');
-  const userInfo = { name, email, phone };
-  const paymentOrderId = req.body.paymentOrderId || null;
+  const userInfo = { phone };
   const db = getDB();
-
-  // ── Access check: 1 free analysis per email, then must pay ──
-  if (db && email) {
-    const pastReports = await db.collection('reports').countDocuments({ email });
-    if (pastReports > 0) {
-      // Not the first time — must have a valid paid & unused order
-      if (!paymentOrderId) {
-        return res.status(402).json({ success: false, error: 'Payment required for additional analysis' });
-      }
-      const validPayment = await db.collection('payments').findOne({
-        orderId: paymentOrderId,
-        email,
-        status: 'paid',
-        usedAt: null,
-      });
-      if (!validPayment) {
-        return res.status(402).json({ success: false, error: 'No valid payment found. Please complete payment first.' });
-      }
-    }
-  }
 
   console.log(`[Analyze] ${req.file.mimetype} ${(req.file.size / 1024).toFixed(1)}KB`);
 
@@ -87,11 +55,6 @@ async function analyze(req, res) {
   }
 
   const reportId = 'DA-' + Date.now().toString(36).toUpperCase();
-
-  // Mark paid order as used
-  if (paymentOrderId) {
-    markUsed(paymentOrderId).catch(err => console.error('[Payment] markUsed failed:', err.message));
-  }
 
   // Respond to frontend immediately — don't make them wait for PDF
   res.json({
@@ -127,8 +90,6 @@ async function analyze(req, res) {
       if (db) {
         await db.collection('reports').insertOne({
           reportId,
-          email,
-          name,
           phone,
           analysis: result.analysis,
           pdfS3Key: s3Result?.key || null,
@@ -150,8 +111,6 @@ async function analyze(req, res) {
         try {
           await db.collection('reports').insertOne({
             reportId,
-            email,
-            name,
             phone,
             analysis: result.analysis,
             pdfS3Key: null,

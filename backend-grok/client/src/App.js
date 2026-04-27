@@ -103,8 +103,8 @@ function App() {
   const [theme, setTheme] = useState(() => {
     try { return localStorage.getItem('derma-theme') || 'light'; } catch { return 'light'; }
   });
-  const [step, setStep] = useState('intro'); // intro → register → payment → capture → analyzing → results
-  const [userInfo, setUserInfo] = useState({ name: '', email: '', phone: '' });
+  const [step, setStep] = useState('intro'); // intro → register → capture → analyzing → results
+  const [userInfo, setUserInfo] = useState({ phone: '' });
   const [regError, setRegError] = useState('');
   const [regLoading, setRegLoading] = useState(false);
   const [images, setImages] = useState({});
@@ -116,9 +116,6 @@ function App() {
   const [aStep, setAStep] = useState(0);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [overrideReady, setOverrideReady] = useState(false);
-  const [paymentInfo, setPaymentInfo] = useState(null); // { price, currency, orderId }
-  const [paymentLoading, setPaymentLoading] = useState(false);
-  const [paymentOrderId, setPaymentOrderId] = useState(null);
 
   const overTimer = useRef(null);
   const vidRef = useRef(null);
@@ -159,9 +156,7 @@ function App() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setRegError('');
-    const { name, email, phone } = userInfo;
-    if (!name.trim()) return setRegError('Please enter your name');
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setRegError('Please enter a valid email');
+    const { phone } = userInfo;
     if (!phone.trim() || phone.replace(/\D/g, '').length < 7) return setRegError('Please enter a valid phone number');
 
     setRegLoading(true);
@@ -169,93 +164,15 @@ function App() {
       const res = await fetch(`${API_URL}/api/register-user`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), phone: phone.trim() })
+        body: JSON.stringify({ phone: phone.trim() })
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Registration failed');
-
-      // Check if user has free access or needs to pay
-      const accessRes = await fetch(`${API_URL}/api/check-access`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() })
-      });
-      const access = await accessRes.json();
-
-      if (access.hasAccess) {
-        if (access.paymentId) setPaymentOrderId(access.paymentId);
-        startCam();
-      } else {
-        setPaymentInfo({ price: access.price, currency: access.currency });
-        setStep('payment');
-      }
+      startCam();
     } catch (err) {
       setRegError(err.message);
     } finally {
       setRegLoading(false);
-    }
-  };
-
-  // ── Payment ──
-  const handlePayment = async () => {
-    setPaymentLoading(true);
-    try {
-      // 1. Create order on backend
-      const res = await fetch(`${API_URL}/api/create-order`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userInfo.email, name: userInfo.name, phone: userInfo.phone })
-      });
-      const order = await res.json();
-      if (!order.success) throw new Error(order.error || 'Order creation failed');
-
-      // 2. Open GoKwik checkout
-      // GoKwik injects window.gokwikSdk after their script loads.
-      // If GoKwik SDK is available, use it; otherwise fall back to manual verification.
-      if (window.gokwikSdk) {
-        window.gokwikSdk.open({
-          merchantId: order.merchantId,
-          orderId: order.orderId,
-          amount: order.amount,
-          currency: order.currency,
-          customer: order.customer,
-          onSuccess: async (paymentData) => {
-            // Verify payment on backend
-            const vRes = await fetch(`${API_URL}/api/verify-payment`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                orderId: order.orderId,
-                paymentId: paymentData.paymentId || paymentData.transactionId,
-                status: 'success',
-                signature: paymentData.signature || '',
-              })
-            });
-            const v = await vRes.json();
-            if (v.verified) {
-              setPaymentOrderId(order.orderId);
-              startCam();
-            } else {
-              setError('Payment verification failed. Please contact support.');
-              setStep('payment');
-            }
-          },
-          onFailure: () => {
-            setError('Payment was not completed. Please try again.');
-            setPaymentLoading(false);
-          },
-          onCancel: () => {
-            setPaymentLoading(false);
-          }
-        });
-      } else {
-        // GoKwik SDK not loaded
-        setError('Payment gateway is not available. Please try again later or contact support.');
-      }
-    } catch (err) {
-      setError('Payment error: ' + err.message);
-    } finally {
-      setPaymentLoading(false);
     }
   };
 
@@ -340,11 +257,7 @@ function App() {
       for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i);
       const fd = new FormData();
       fd.append('image', new File([a], 'skin.jpg', { type: 'image/jpeg' }));
-      // Send user info
-      fd.append('email', userInfo.email || '');
-      fd.append('name', userInfo.name || '');
       fd.append('phone', userInfo.phone || '');
-      if (paymentOrderId) fd.append('paymentOrderId', paymentOrderId);
       // Send all 3 angle images as base64 for PDF generation
       if (src.front) fd.append('img_front', src.front);
       if (src.left) fd.append('img_left', src.left);
@@ -391,7 +304,7 @@ function App() {
   const reset = () => {
     stopCam(); setImages({}); setCurAngle('front'); setAnalysis(null);
     setError(null); setQuality(null); setCamReady(false); setStep('intro');
-    setOverrideReady(false); setPaymentInfo(null); setPaymentOrderId(null);
+    setOverrideReady(false);
   };
 
   const cur = angles.find(a => a.id === curAngle);
@@ -456,23 +369,13 @@ function App() {
               ← Back
             </button>
             <h2>Your Details</h2>
-            <p className="register-sub">We'll include this information in your analysis report.</p>
+            <p className="register-sub">We'll use your phone number to send your analysis report.</p>
 
             <form onSubmit={handleRegister}>
               <div className="form-group">
-                <label>Full Name</label>
-                <input type="text" placeholder="John Doe" value={userInfo.name}
-                  onChange={e => setUserInfo(p => ({ ...p, name: e.target.value }))} autoFocus />
-              </div>
-              <div className="form-group">
-                <label>Email Address</label>
-                <input type="email" placeholder="john@example.com" value={userInfo.email}
-                  onChange={e => setUserInfo(p => ({ ...p, email: e.target.value }))} />
-              </div>
-              <div className="form-group">
                 <label>Phone Number</label>
                 <input type="tel" placeholder="+91 98765 43210" value={userInfo.phone}
-                  onChange={e => setUserInfo(p => ({ ...p, phone: e.target.value }))} />
+                  onChange={e => setUserInfo(p => ({ ...p, phone: e.target.value }))} autoFocus />
               </div>
               {regError && <p className="form-error">{regError}</p>}
               <button type="submit" className="btn-register" disabled={regLoading}>
@@ -480,42 +383,6 @@ function App() {
               </button>
             </form>
             <p className="register-note">Your data is stored securely and used only for generating your personal report.</p>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ PAYMENT ═══ */}
-      {step === 'payment' && (
-        <div className="screen register">
-          <div className="register-card payment-card">
-            <button className="register-back" onClick={() => setStep('register')}>
-              ← Back
-            </button>
-            <div className="payment-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-              </svg>
-            </div>
-            <h2>Unlock Your Analysis</h2>
-            <p className="register-sub">
-              You've used your free analysis. Pay once to get another full skin report with personalized recommendations.
-            </p>
-            <div className="payment-price">
-              <span className="price-amount">
-                {paymentInfo?.currency === 'INR' ? '₹' : '$'}{paymentInfo?.price || 199}
-              </span>
-              <span className="price-label">one-time payment</span>
-            </div>
-            <div className="payment-features">
-              <div className="pf-item"><span className="pf-check">✓</span> Full 3-angle skin scan</div>
-              <div className="pf-item"><span className="pf-check">✓</span> AI-powered analysis</div>
-              <div className="pf-item"><span className="pf-check">✓</span> Downloadable PDF report</div>
-              <div className="pf-item"><span className="pf-check">✓</span> Personalized product recommendations</div>
-            </div>
-            <button className="btn-register btn-pay" onClick={handlePayment} disabled={paymentLoading}>
-              {paymentLoading ? 'Processing...' : `Pay ${paymentInfo?.currency === 'INR' ? '₹' : '$'}${paymentInfo?.price || 199}`}
-            </button>
-            <p className="register-note">Secure payment powered by GoKwik. Your payment details are encrypted.</p>
           </div>
         </div>
       )}
