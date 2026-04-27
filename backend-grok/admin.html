@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DermaAI — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f0f0e;--bg2:#1a1918;--card:#1e1d1b;--card2:#252422;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);
+  --text:#b5b0a8;--text2:#6b6660;--white:#f0ece4;
+  --accent:#5fa97a;--accent2:#4d9468;--accent-light:rgba(95,169,122,0.08);
+  --green:#5fa97a;--amber:#d4993a;--red:#d45555;
+  --font:'DM Sans',sans-serif;--serif:'Playfair Display',Georgia,serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Login */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:48px 40px;max-width:400px;width:100%;text-align:center}
+.login-card h1{font-family:var(--serif);font-size:28px;color:var(--white);margin-bottom:6px}
+.login-card p{color:var(--text2);font-size:14px;margin-bottom:32px}
+.login-card input{width:100%;padding:12px 16px;border-radius:10px;border:1.5px solid var(--border2);background:var(--bg2);color:var(--white);font:400 15px var(--font);outline:none;margin-bottom:16px;transition:border 0.3s}
+.login-card input:focus{border-color:var(--accent)}
+.login-card button{width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:#fff;font:600 15px var(--font);cursor:pointer;transition:background 0.3s}
+.login-card button:hover{background:var(--accent2)}
+.login-err{color:var(--red);font-size:13px;margin-bottom:12px}
+
+/* Layout */
+.app{display:none}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:var(--bg);border-bottom:1px solid var(--border)}
+.topbar h1{font-family:var(--serif);font-size:18px;color:var(--white);font-weight:500}
+.topbar h1 span{color:var(--accent)}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.topbar-right span{font-size:12px;color:var(--text2)}
+.btn-logout{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font:500 12px var(--font);cursor:pointer}
+.btn-logout:hover{color:var(--white);border-color:var(--border2)}
+
+.main{padding:72px 24px 40px;max-width:1200px;margin:0 auto}
+
+/* Nav tabs */
+.nav-tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--border);padding-bottom:0}
+.nav-tab{padding:10px 20px;font:600 13px var(--font);color:var(--text2);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all 0.2s}
+.nav-tab:hover{color:var(--white)}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:32px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;transition:transform 0.2s}
+.stat-card:hover{transform:translateY(-2px)}
+.stat-num{font-family:var(--serif);font-size:36px;font-weight:600;color:var(--white);line-height:1}
+.stat-label{font-size:12px;color:var(--text2);margin-top:6px;text-transform:uppercase;letter-spacing:0.5px;font-weight:500}
+
+/* Table */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.table-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:12px}
+.table-head h2{font-family:var(--serif);font-size:18px;color:var(--white);font-weight:500}
+.search-box{display:flex;gap:8px}
+.search-box input{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--white);font:400 13px var(--font);outline:none;width:220px}
+.search-box input:focus{border-color:var(--accent)}
+.search-box button{padding:8px 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font:600 12px var(--font);cursor:pointer}
+
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:10px 16px;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);background:var(--bg2)}
+td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:hover td{background:rgba(95,169,122,0.03)}
+.td-name{color:var(--white);font-weight:600}
+.td-email{color:var(--accent);font-size:12px}
+.td-score{font-family:var(--serif);font-size:18px;font-weight:600}
+.td-score.g{color:var(--green)}.td-score.a{color:var(--amber)}.td-score.r{color:var(--red)}
+.td-badge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px}
+.td-badge.mild{background:rgba(95,169,122,0.1);color:var(--green)}
+.td-badge.moderate{background:rgba(212,153,58,0.1);color:var(--amber)}
+.td-badge.severe{background:rgba(212,85,85,0.1);color:var(--red)}
+.td-date{font-size:12px;color:var(--text2)}
+.td-actions{display:flex;gap:6px}
+.btn-sm{padding:5px 12px;border-radius:6px;font:600 11px var(--font);cursor:pointer;border:1px solid var(--border);background:var(--card2);color:var(--text2);transition:all 0.2s}
+.btn-sm:hover{color:var(--white);border-color:var(--border2)}
+.btn-sm.pdf{color:var(--accent);border-color:rgba(95,169,122,0.2)}
+.btn-sm.pdf:hover{background:var(--accent-light)}
+.btn-sm.del{color:var(--red);border-color:rgba(212,85,85,0.2)}
+.btn-sm.del:hover{background:rgba(212,85,85,0.06)}
+
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;padding:16px}
+.pagination button{padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--card2);color:var(--text2);font:500 12px var(--font);cursor:pointer}
+.pagination button:hover{color:var(--white)}
+.pagination button:disabled{opacity:0.3;cursor:not-allowed}
+.pagination span{font-size:12px;color:var(--text2)}
+
+.empty{padding:40px;text-align:center;color:var(--text2);font-size:14px}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:18px;max-width:700px;width:100%;max-height:85vh;overflow-y:auto;padding:32px}
+.modal h2{font-family:var(--serif);font-size:22px;color:var(--white);margin-bottom:4px;font-weight:500}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:24px}
+.modal-close{position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:8px;border:none;background:var(--card2);color:var(--text2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.detail-item{padding:14px;border-radius:10px;background:var(--bg2);border:1px solid var(--border)}
+.detail-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:4px}
+.detail-val{font-size:14px;color:var(--white);font-weight:500}
+.detail-val.score{font-family:var(--serif);font-size:28px;font-weight:600}
+.issues-list{margin-bottom:20px}
+.issue-item{padding:12px;border-radius:8px;background:var(--bg2);border-left:3px solid var(--text2);margin-bottom:8px}
+.issue-item.mild{border-left-color:var(--green)}.issue-item.moderate{border-left-color:var(--amber)}.issue-item.severe{border-left-color:var(--red)}
+.issue-item h4{font-size:13px;color:var(--white);margin-bottom:2px}
+.issue-item p{font-size:12px;color:var(--text2);line-height:1.5}
+.modal-actions{display:flex;gap:8px;margin-top:20px}
+.btn-modal{padding:10px 20px;border-radius:10px;font:600 13px var(--font);cursor:pointer;border:none;transition:all 0.2s}
+.btn-modal.primary{background:var(--accent);color:#fff}
+.btn-modal.primary:hover{background:var(--accent2)}
+.btn-modal.outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-modal.outline:hover{border-color:var(--border2)}
+
+/* Recent list */
+.recent-list{display:flex;flex-direction:column;gap:8px}
+.recent-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:10px;background:var(--bg2);border:1px solid var(--border)}
+.recent-left{display:flex;flex-direction:column;gap:2px}
+.recent-name{font-size:13px;color:var(--white);font-weight:600}
+.recent-meta{font-size:11px;color:var(--text2)}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn 0.4s ease both}
+
+@media(max-width:600px){
+  .detail-grid{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  table{font-size:12px}
+  th,td{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <h1>Derma<span style="color:#5fa97a">AI</span></h1>
+    <p>Admin Dashboard</p>
+    <div id="loginErr" class="login-err" style="display:none"></div>
+    <input type="password" id="keyInput" placeholder="Enter admin key" autofocus>
+    <button onclick="doLogin()">Sign In</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <div class="topbar">
+    <h1>Derma<span>AI</span> Admin</h1>
+    <div class="topbar-right">
+      <span id="dbStatus">●</span>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('dashboard',this)">Dashboard</button>
+      <button class="nav-tab" onclick="switchTab('users',this)">Users</button>
+      <button class="nav-tab" onclick="switchTab('reports',this)">Reports</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content">
+      <div class="stats-grid fade-in" id="statsGrid"></div>
+      <div class="table-wrap fade-in">
+        <div class="table-head"><h2>Recent Reports</h2></div>
+        <div id="recentList" class="recent-list" style="padding:16px"></div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div id="tab-users" class="tab-content" style="display:none">
+      <div class="table-wrap fade-in">
+        <div class="table-head">
+          <h2>All Users</h2>
+          <div class="search-box">
+            <input type="text" id="userSearch" placeholder="Search name, email, phone...">
+            <button onclick="loadUsers(1)">Search</button>
+          </div>
+        </div>
+        <table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Analyses</th><th>Joined</th></tr></thead><tbody id="usersBody"></tbody></table>
+        <div class="pagination" id="usersPagination"></div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div id="tab-reports" class="tab-content" style="display:none">
+      <div class="table-wrap fade-in">
+        <div class="table-head">
+          <h2>All Reports</h2>
+          <div class="search-box">
+            <input type="text" id="reportSearch" placeholder="Search email, name, report ID...">
+            <button onclick="loadReports(1)">Search</button>
+          </div>
+        </div>
+        <table><thead><tr><th>Report ID</th><th>Patient</th><th>Score</th><th>Skin Type</th><th>Issues</th><th>Size</th><th>Date</th><th>Actions</th></tr></thead><tbody id="reportsBody"></tbody></table>
+        <div class="pagination" id="reportsPagination"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg" style="display:none" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()" style="position:relative">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+const API = '';
+let adminKey = localStorage.getItem('derma-admin-key') || '';
+
+// Auto-login if key stored
+if (adminKey) { document.getElementById('loginWrap').style.display='none'; document.getElementById('app').style.display='block'; init(); }
+
+document.getElementById('keyInput').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+async function api(path, opts = {}) {
+  const headers = { 'x-admin-key': adminKey, ...(opts.headers || {}) };
+  const res = await fetch(API + path, { ...opts, headers });
+  if (res.status === 401) { doLogout(); throw new Error('Unauthorized'); }
+  return res.json();
+}
+
+async function doLogin() {
+  const key = document.getElementById('keyInput').value.trim();
+  if (!key) return;
+  adminKey = key;
+  try {
+    await api('/admin/api/stats');
+    localStorage.setItem('derma-admin-key', key);
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    init();
+  } catch {
+    document.getElementById('loginErr').textContent = 'Invalid admin key';
+    document.getElementById('loginErr').style.display = 'block';
+    adminKey = '';
+  }
+}
+
+function doLogout() {
+  adminKey = '';
+  localStorage.removeItem('derma-admin-key');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginWrap').style.display = 'flex';
+  document.getElementById('keyInput').value = '';
+}
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).style.display = 'block';
+  btn.classList.add('active');
+  if (id === 'users') loadUsers(1);
+  if (id === 'reports') loadReports(1);
+}
+
+async function init() {
+  try {
+    const data = await api('/admin/api/stats');
+    const s = data.stats;
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card"><div class="stat-num">${s.totalUsers}</div><div class="stat-label">Total Users</div></div>
+      <div class="stat-card"><div class="stat-num">${s.totalReports}</div><div class="stat-label">Total Reports</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:${s.avgScore>=70?'var(--green)':s.avgScore>=40?'var(--amber)':'var(--red)'}">${s.avgScore}</div><div class="stat-label">Avg Score</div></div>
+      <div class="stat-card"><div class="stat-num">${s.recentReports.length}</div><div class="stat-label">Recent (24h)</div></div>
+    `;
+    const rl = document.getElementById('recentList');
+    if (!s.recentReports.length) { rl.innerHTML = '<div class="empty">No reports yet</div>'; return; }
+    rl.innerHTML = s.recentReports.map(r => `
+      <div class="recent-item">
+        <div class="recent-left">
+          <span class="recent-name">${esc(r.name||r.email)}</span>
+          <span class="recent-meta">${esc(r.reportId)} · Score: ${r.overallScore} · ${fmtDate(r.createdAt)}</span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-sm pdf" onclick="viewReport('${r.reportId}')">View</button>
+          <button class="btn-sm pdf" onclick="downloadPdf('${r.reportId}')">PDF</button>
+        </div>
+      </div>
+    `).join('');
+    document.getElementById('dbStatus').style.color = '#5fa97a';
+    document.getElementById('dbStatus').title = 'Connected';
+  } catch (e) {
+    document.getElementById('dbStatus').style.color = '#d45555';
+    document.getElementById('dbStatus').title = 'Error: ' + e.message;
+  }
+}
+
+async function loadUsers(page) {
+  const search = document.getElementById('userSearch').value.trim();
+  const data = await api(`/admin/api/users?page=${page}&search=${encodeURIComponent(search)}`);
+  const tb = document.getElementById('usersBody');
+  if (!data.users.length) { tb.innerHTML = '<tr><td colspan="5" class="empty">No users found</td></tr>'; return; }
+  tb.innerHTML = data.users.map(u => `
+    <tr>
+      <td class="td-name">${esc(u.name||'-')}</td>
+      <td class="td-email">${esc(u.email)}</td>
+      <td>${esc(u.phone||'-')}</td>
+      <td>${u.analysisCount||0}</td>
+      <td class="td-date">${fmtDate(u.createdAt)}</td>
+    </tr>
+  `).join('');
+  renderPagination('usersPagination', data.page, data.pages, loadUsers);
+}
+
+async function loadReports(page) {
+  const search = document.getElementById('reportSearch').value.trim();
+  const data = await api(`/admin/api/reports?page=${page}&search=${encodeURIComponent(search)}`);
+  const tb = document.getElementById('reportsBody');
+  if (!data.reports.length) { tb.innerHTML = '<tr><td colspan="8" class="empty">No reports found</td></tr>'; return; }
+  tb.innerHTML = data.reports.map(r => {
+    const sc = r.overallScore||0;
+    const scClass = sc>=70?'g':sc>=40?'a':'r';
+    return `
+    <tr>
+      <td style="font-size:11px;font-family:monospace;color:var(--text2)">${esc(r.reportId)}</td>
+      <td><span class="td-name">${esc(r.name||'-')}</span><br><span class="td-email">${esc(r.email)}</span></td>
+      <td class="td-score ${scClass}">${sc}</td>
+      <td style="text-transform:capitalize">${esc(r.skinType||'-')}</td>
+      <td>${r.issueCount||0}</td>
+      <td class="td-date">${r.pdfSize?Math.round(r.pdfSize/1024)+'KB':'-'}</td>
+      <td class="td-date">${fmtDate(r.createdAt)}</td>
+      <td class="td-actions">
+        <button class="btn-sm pdf" onclick="viewReport('${r.reportId}')">View</button>
+        <button class="btn-sm pdf" onclick="downloadPdf('${r.reportId}')">PDF</button>
+        <button class="btn-sm del" onclick="deleteReport('${r.reportId}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+  renderPagination('reportsPagination', data.page, data.pages, loadReports);
+}
+
+function renderPagination(id, page, pages, fn) {
+  const el = document.getElementById(id);
+  if (pages <= 1) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <button ${page<=1?'disabled':''} onclick="(${fn.name})(${page-1})">← Prev</button>
+    <span>Page ${page} of ${pages}</span>
+    <button ${page>=pages?'disabled':''} onclick="(${fn.name})(${page+1})">Next →</button>
+  `;
+}
+
+async function viewReport(reportId) {
+  const data = await api(`/admin/api/reports/${reportId}`);
+  const r = data.report;
+  const sc = r.overallScore||0;
+  const a = r.analysis||{};
+  document.getElementById('modalContent').innerHTML = `
+    <h2>Report ${esc(r.reportId)}</h2>
+    <p class="modal-sub">${esc(r.name)} · ${esc(r.email)} · ${fmtDate(r.createdAt)}</p>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="detail-label">Overall Score</div><div class="detail-val score" style="color:${sc>=70?'var(--green)':sc>=40?'var(--amber)':'var(--red)'}">${sc}/100</div></div>
+      <div class="detail-item"><div class="detail-label">Skin Type</div><div class="detail-val" style="text-transform:capitalize">${esc(a.skinType||'-')}</div></div>
+      <div class="detail-item"><div class="detail-label">Phone</div><div class="detail-val">${esc(r.phone||'-')}</div></div>
+      <div class="detail-item"><div class="detail-label">Issues Found</div><div class="detail-val">${(a.detectedIssues||[]).length}</div></div>
+    </div>
+    ${a.summary?`<p style="font-size:13px;line-height:1.7;margin-bottom:16px;color:var(--text)">${esc(a.summary)}</p>`:''}
+    ${(a.detectedIssues||[]).length?`
+      <h3 style="font-size:14px;color:var(--white);margin-bottom:8px">Detected Conditions</h3>
+      <div class="issues-list">${a.detectedIssues.map(i=>`
+        <div class="issue-item ${i.severity||''}">
+          <h4>${esc(i.issue)} <span class="td-badge ${i.severity}">${i.severity}</span></h4>
+          <p>${esc(i.description)}</p>
+        </div>
+      `).join('')}</div>
+    `:''}
+    ${(a.productRecommendations||[]).length?`
+      <h3 style="font-size:14px;color:var(--white);margin-bottom:8px">Products</h3>
+      <div style="margin-bottom:16px">${a.productRecommendations.map(p=>`
+        <div style="padding:8px 12px;border-radius:8px;background:var(--bg2);margin-bottom:6px;font-size:12px">
+          <strong style="color:var(--white)">${esc(p.type)}: ${esc(p.name)}</strong><br>
+          <span style="color:var(--text2)">${esc(p.usage)} — ${esc(p.keyIngredient)}</span>
+        </div>
+      `).join('')}</div>
+    `:''}
+    <div class="modal-actions">
+      <button class="btn-modal primary" onclick="downloadPdf('${r.reportId}')">Download PDF</button>
+      <button class="btn-modal outline" onclick="closeModal()">Close</button>
+    </div>
+  `;
+  document.getElementById('modalBg').style.display = 'flex';
+}
+
+function downloadPdf(reportId) {
+  window.open(`/admin/api/reports/${reportId}/pdf?key=${encodeURIComponent(adminKey)}`, '_blank');
+}
+
+async function deleteReport(reportId) {
+  if (!confirm('Delete this report permanently?')) return;
+  await api(`/admin/api/reports/${reportId}`, { method: 'DELETE' });
+  loadReports(1);
+}
+
+function closeModal() { document.getElementById('modalBg').style.display = 'none'; }
+
+function esc(s) { if(!s) return ''; const d=document.createElement('div'); d.textContent=String(s); return d.innerHTML; }
+function fmtDate(d) { if(!d) return '-'; return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+</script>
+</body>
+</html>
