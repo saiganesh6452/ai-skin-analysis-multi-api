@@ -310,7 +310,7 @@ function App() {
   const cur = angles.find(a => a.id === curAngle);
   const shutterLabel = !camReady ? 'Starting...' : !hasFace ? 'No face detected'
     : facePos === 'too-close' ? 'Move back' : facePos === 'too-far' ? 'Come closer'
-      : canCap ? 'Capture' : curAngle === 'left' ? 'Turn head left...'
+      : canCap ? "Let's Capture" : curAngle === 'left' ? 'Turn head left...'
         : curAngle === 'right' ? 'Turn head right...' : 'Face the camera...';
 
   const scoreColor = (s) => s >= 70 ? 'var(--green)' : s >= 40 ? 'var(--amber)' : 'var(--red)';
@@ -391,16 +391,6 @@ function App() {
       {step === 'capture' && (
         <div className="capture">
           <div className="capture-layout">
-            <header className="cap-head">
-              <button className="btn-back" onClick={() => { stopCam(); reset(); }}>← Back</button>
-              <div className="cap-steps">
-                {angles.map(a => (
-                  <span key={a.id} className={`cap-pill ${images[a.id] ? 'done' : ''} ${curAngle === a.id ? 'cur' : ''}`}>
-                    {images[a.id] ? '✓ ' : ''}{a.label}
-                  </span>
-                ))}
-              </div>
-            </header>
             <div className="cam-wrap">
               <video ref={vidRef} autoPlay playsInline muted className="cam-video" />
               <canvas ref={canRef} style={{ display: 'none' }} />
@@ -414,11 +404,6 @@ function App() {
               )}
             </div>
             <div className="cap-side">
-              <div className="angle-info">
-                <div className="angle-num">{angles.findIndex(a => a.id === curAngle) + 1}<span>/{angles.length}</span></div>
-                <h3>{cur?.label}</h3>
-                <p>{cur?.desc}</p>
-              </div>
               <button className={`btn-shutter ${canCap ? 'go' : ''}`} onClick={capture} disabled={!canCap}>
                 <span className="shutter-ring"><span className="shutter-dot" /></span>
                 <span>{shutterLabel}</span>
