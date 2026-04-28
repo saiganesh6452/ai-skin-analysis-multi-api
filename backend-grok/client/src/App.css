@@ -75,31 +75,8 @@ body {
 .fade-up-7 { animation-delay: 0.35s; }
 .fade-up-8 { animation-delay: 0.4s; }
 
-/* ═══ TOPBAR ═══ */
-.topbar {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 24px; height: 56px;
-  background: var(--bg); border-bottom: 1px solid var(--border);
-  transition: background 0.4s;
-}
-.topbar-brand {
-  display: flex; align-items: center;
-}
-.topbar-logo {
-  height: 28px; width: auto;
-}
-.topbar-right { display: flex; align-items: center; gap: 8px; }
-
-.theme-toggle {
-  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border);
-  background: var(--card); cursor: pointer; display: flex; align-items: center;
-  justify-content: center; transition: all 0.3s; color: var(--text2); font-size: 15px;
-}
-.theme-toggle:hover { border-color: var(--border2); color: var(--white); transform: scale(1.05); }
-
 /* ═══ LAYOUT ═══ */
-.app { min-height: 100dvh; padding-top: 56px; }
+.app { min-height: 100dvh; }
 .screen { width: 100%; max-width: 960px; margin: 0 auto; padding: 0 16px; }
 
 /* ═══ INTRO SCREEN ═══ */
