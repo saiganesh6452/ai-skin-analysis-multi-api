@@ -323,17 +323,6 @@ function App() {
 
   return (
     <div className="app">
-      {/* TOPBAR */}
-      <div className="topbar">
-        <div className="topbar-brand">
-          <img src={theme === 'dark' ? '/logo-white.png' : '/logo-dark.png'} alt="Negative" className="topbar-logo" />
-        </div>
-        <div className="topbar-right">
-          <button className="theme-toggle" onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} title="Toggle theme">
-            {theme === 'dark' ? '☀' : '☾'}
-          </button>
-        </div>
-      </div>
 
       {/* ═══ INTRO ═══ */}
       {step === 'intro' && (
