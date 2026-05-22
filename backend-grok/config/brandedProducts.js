@@ -56,6 +56,17 @@ const BRANDED_PRODUCTS = [
   },
 
   {
+    type: "Cleanser",
+    name: "Cica Niacinamide Gentle Face Cleanser",
+    brand: "From Negative",
+    description: "Gentle gel cleanser with CICA and Niacinamide that lifts away dirt, excess oil, and SPF without stripping the skin barrier. Calms redness and preps skin for the rest of your routine.",
+    usage: "Twice daily AM & PM",
+    keyIngredient: "CICA + Niacinamide",
+    url: "https://www.fromnegative.com/products/cica-niacinamide-face-cleanser",
+    targetConditions: ["acne", "redness", "oiliness", "enlarged pores", "blackheads", "dehydration"]
+  },
+
+  {
     type: "Toner",
     name: "Cica Niacinamide Face Toner Mist",
     brand: "From Negative",
@@ -75,6 +86,17 @@ const BRANDED_PRODUCTS = [
     keyIngredient: "Raspberry Extract + Shea Butter",
     url: "https://www.fromnegative.com/products/raspberry-lip-mask",
     targetConditions: ["dryness", "dehydration"]
+  },
+
+  {
+    // Generic essential — From Negative does not sell an SPF, so no `brand`
+    // is set and it renders as a category recommendation, not a branded product.
+    type: "Sunscreen",
+    name: "Broad-Spectrum Sunscreen SPF 50 PA++++",
+    description: "A daily broad-spectrum sunscreen is the non-negotiable final step every morning. It locks in your results, stops dark spots and pigmentation from returning, and shields the barrier from UV damage. Use any SPF 50 PA++++ you like.",
+    usage: "Every morning; reapply every 2-3 hours of sun exposure",
+    keyIngredient: "SPF 50 PA++++",
+    targetConditions: ["all"]
   },
 
   {
