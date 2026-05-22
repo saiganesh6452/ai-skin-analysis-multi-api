@@ -2,6 +2,7 @@
 const OpenAI = require('openai');
 const config = require('../config');
 const { BRANDED_PRODUCTS, MAX_PRODUCTS } = require('../config/brandedProducts');
+const { buildRoutine } = require('../config/routines');
 
 const grok = new OpenAI({
   apiKey: config.ai.apiKey || 'dummy-key-for-startup',
@@ -87,6 +88,8 @@ async function analyzeSkin(base64Image) {
     try {
       const analysis = JSON.parse(txt);
       analysis.productRecommendations = matchBrandedProducts(analysis);
+      // Override the AI's generic routine with a From Negative product routine
+      analysis.homeCareRoutine = buildRoutine(analysis);
       return { success: true, analysis };
     } catch {
       return { success: false, error: 'AI response was not valid JSON' };

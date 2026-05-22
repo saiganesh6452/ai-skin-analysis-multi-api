@@ -40,7 +40,7 @@ frontend/dist/
 frontend/.cache/
 .parcel-cache/
 backend-grok/client/node_modules/
-
+backend-grok/client/build/
 # ── Docker ────────────────────────────────────
 kafka-data/
 kafka-logs/
